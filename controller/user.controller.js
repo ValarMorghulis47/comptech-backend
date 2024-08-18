@@ -3,7 +3,7 @@ import { DeleteFileCloudinary, UploadFilesCloudinary } from "../utils/features.j
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { User } from "../models/user.model.js";
 import { generateTokenFromid } from "../utils/generateToken.js";
-
+import {v2 as cloudinary} from 'cloudinary';
 
 const registerUser = TryCatch(async (req, res, next) => {
     const { name, email, password, session, department, about } = req.body;
@@ -14,19 +14,19 @@ const registerUser = TryCatch(async (req, res, next) => {
         password,
         session,
         department,
-        about
+        about,
+        img: {}
     };
  
+    const mycloud = await  cloudinary.uploader.upload(req.body.avatar, {
+        folder: 'avatars',
+        width: 150,
+        crop: 'scale',
+    });
 
-    if (req.file) {
-        const folder = "user";
-        const result = await UploadFilesCloudinary(req.file, folder);
-        if (!result) return next(new ErrorHandler('Image upload failed', 400));
-
-        userData.img = {
-            public_id: result.public_id,
-            url: result.secure_url
-        };
+    userData.img={
+        public_id: mycloud.public_id,
+        url: mycloud.secure_url
     }
 
     try {

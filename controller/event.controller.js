@@ -5,19 +5,16 @@ import { DeleteFileCloudinary, UploadFilesCloudinary } from "../utils/features.j
 
 
 const registerEvent = TryCatch(async (req, res, next) => {
-    const { title, date, location, description, category, spokesPerson } = req.body;
-    let eventData = { title, date, location, description, category, spokesPerson };
+    
+    const { title, date, time , location, description, category, spokesPerson, isFeatured } = req.body;
+    let eventData = { title, date, time ,location, description, category, spokesPerson, isFeatured };
 
     if (req.body?.collaboration) {
         eventData.collaboration = req.body.collaboration;
     }
 
-    if (req.body?.eventPoints) {
-        eventData.eventPoints = JSON.parse(req.body.eventPoints);
-    }
-
-    if (req.body?.isFeatured) {
-        eventData.isFeatured = req.body.isFeatured;
+    if (req.body?.keyPoints) {
+        eventData.keyPoints = JSON.parse(req.body.keyPoints);
     }
 
     if (req?.file) {
@@ -30,8 +27,9 @@ const registerEvent = TryCatch(async (req, res, next) => {
             url: result.secure_url
         };
     }
-
+    
     const event = await Event.create(eventData);
+    
     if (!event) {
         if (eventData.img && eventData.img.public_id) {
             await DeleteFileCloudinary(eventData.img.public_id);

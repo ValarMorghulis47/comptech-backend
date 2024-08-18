@@ -6,7 +6,7 @@ import { deleteUserValidator, getUserValidator, loginValidator, registerValidato
 
 const app = express.Router();
 
-app.post('/register', registerValidator(), validateHandler , registerUser);
+app.post('/register',registerValidator(), validateHandler , registerUser);
 app.post('/login', loginValidator(), validateHandler, loginUser);
 
 

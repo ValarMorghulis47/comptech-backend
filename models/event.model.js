@@ -31,7 +31,7 @@ const eventSchema = new mongoose.Schema({
     spokesPerson: {
         // type: mongoose.Schema.Types.ObjectId,
         // ref: 'User',
-        type:String,
+        type: String,
         required: true
     },
     isFeatured: {
@@ -45,9 +45,9 @@ const eventSchema = new mongoose.Schema({
     collaboration: {
         type: String,
     },
-    eventPoints: [
+    keyPoints: [
         {
-            keyPoints: {
+            name: {
                 type: String,
             },
             explanation: {

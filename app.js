@@ -11,14 +11,10 @@ const app = express();
 
 const corsOptions = {
   origin: "*",
+  credentials: true,
 };
 
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 
 cloudinaryConfig({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -27,21 +23,16 @@ cloudinaryConfig({
 });
 
 app.use(cookieParser());
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Welcome to the User Registration API");
 });
 
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("Welcome");
-});
 app.get("/health", (req, res) => {
   res.status(200).json("Health checking");
 });
 
-// imports
 app.use('/api/user', userRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/team', teamRouter);
