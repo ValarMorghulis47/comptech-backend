@@ -9,7 +9,7 @@ const app = express.Router();
 app.get('/all', getAllEvents);
 app.get('/single/:id', getEventValidator(), validateHandler, getEventById);
 
-app.post('/create', singleUpload, registerEventValidator(), validateHandler, registerEvent);
+app.post('/create', singleUpload, registerEvent);
 app.put('/update/:id', getEventValidator(), validateHandler, updateEvent);
 app.delete('/delete/:id', getEventValidator(), validateHandler, deleteEvent);
 
