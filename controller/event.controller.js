@@ -7,7 +7,7 @@ import { DeleteFileCloudinary, UploadFilesCloudinary } from "../utils/features.j
 const registerEvent = TryCatch(async (req, res, next) => {
     
     const { title, date, time , location, description, category, spokesPerson, isFeatured } = req.body;
-    let eventData = { title, date, time ,location, description, category, spokesPerson, isFeatured };
+    let eventData = { title, date: new Date(date), time ,location, description, category, spokesPerson, isFeatured };
 
     if (req.body?.collaboration) {
         eventData.collaboration = req.body.collaboration;
