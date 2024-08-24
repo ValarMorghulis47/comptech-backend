@@ -45,7 +45,8 @@ const registerEvent = TryCatch(async (req, res, next) => {
 });
 
 const getAllEvents = TryCatch(async (req, res, next) => {
-    const events = await Event.find().populate('spokesPerson', 'name img currentPosition eventPoints about');
+    
+    const events = await Event.find();
     if (!events) return next(new ErrorHandler('No events found', 404));
 
     return res.status(200).json({
@@ -56,7 +57,7 @@ const getAllEvents = TryCatch(async (req, res, next) => {
 })
 
 const getEventById = TryCatch(async (req, res, next) => {
-    const event = await Event.findById(req.params.id).populate('spokesPerson', 'name img currentPosition eventPoints about');
+    const event = await Event.findById(req.params.id);
     if (!event) return next(new ErrorHandler('Event not found', 404));
 
     return res.status(200).json({
