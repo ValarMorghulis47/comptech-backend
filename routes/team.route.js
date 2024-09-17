@@ -5,7 +5,7 @@ import { addMemberValidator, newTeamValidator, removeMemberValidator, validateHa
 
 const app = express.Router();
 
-app.use(AuthenticateUser);
+// app.use(AuthenticateUser);
 
 app.post('/newteam', newTeamValidator(), validateHandler, createTeam);
 app.put('/addmembers', addMemberValidator(), validateHandler, addMembers);

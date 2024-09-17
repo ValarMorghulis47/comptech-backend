@@ -16,26 +16,26 @@ cloudinaryConfig({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const connectToMongodb = async () => {
-  try {
-    await mongoose.connect(DB, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    console.log("Error in connecting to Mongodb", error.message);
-  }
-};
-
 // const connectToMongodb = async () => {
 //   try {
-//     await mongoose.connect(`${DB2}/${DB_NAME}`);
+//     await mongoose.connect(DB, {
+//       useNewUrlParser: true,
+//       useUnifiedTopology: true,
+//     });
 //     console.log("Connected to MongoDB");
 //   } catch (error) {
 //     console.log("Error in connecting to Mongodb", error.message);
 //   }
 // };
+
+const connectToMongodb = async () => {
+  try {
+    await mongoose.connect(`${DB2}/${DB_NAME}`);
+    console.log("Connected to MongoDB");
+  } catch (error) {
+    console.log("Error in connecting to Mongodb", error.message);
+  }
+};
 
 connectToMongodb()
   .then(() => {
