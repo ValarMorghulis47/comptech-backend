@@ -23,9 +23,9 @@ const registerUser = TryCatch(async (req, res, next) => {
         userData.socialMedia = JSON.parse(req.body.socialMedia);
     }
  
-    if (req?.file) {
+    if (req?.files?.image) {
         const folder = "avatar";
-        const result = await UploadFilesCloudinary(req.file, folder);
+        const result = await UploadFilesCloudinary(req.files.image[0], folder);
         if (!result) return next(new ErrorHandler('Image upload failed', 400));
 
         userData.img = {
