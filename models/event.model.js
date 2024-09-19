@@ -5,7 +5,7 @@ const eventSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    img: {
+    eventCover: {
         public_id: {
             type: String,
         },
@@ -13,6 +13,16 @@ const eventSchema = new mongoose.Schema({
             type: String,
         }
     },
+    eventPics: [
+        {
+            public_id: {
+                type: String,
+            },
+            url: {
+                type: String,
+            }
+        }
+    ],
     date: {
         type: Date,
         required: true
@@ -29,10 +39,32 @@ const eventSchema = new mongoose.Schema({
         required: true
     },
     spokesPerson: {
-        // type: mongoose.Schema.Types.ObjectId,
-        // ref: 'User',
-        type: String,
-        required: true
+        name: {
+            type: String,
+            required: true
+        },
+        description: {
+            type: String,
+            required: true
+        },
+        image: {
+            public_id: {
+                type: String,
+            },
+            url: {
+                type: String,
+            }
+        },
+        socials: [
+            {
+                name: {
+                    type: String,
+                },
+                url: {
+                    type: String,
+                }
+            }
+        ]
     },
     isFeatured: {
         type: Boolean,
