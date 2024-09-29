@@ -5,9 +5,27 @@ import { DeleteFileCloudinary, UploadFilesCloudinary } from "../utils/features.j
 
 
 const registerEvent = TryCatch(async (req, res, next) => {
-    
-    const { title, date, time , location, description, category, spokesPerson, isFeatured } = req.body;
-    let eventData = { title, date: new Date(date), time ,location, description, category, spokesPerson, isFeatured };
+    const { title, date, time, location, description, category, spokesPerson, isFeatured } = req.body;
+    let eventData = {
+        title,
+        date: new Date(date),
+        time,
+        location,
+        description,
+        category,
+        isFeatured: isFeatured !== undefined ? isFeatured : false
+    };
+
+    // Check if spokesPerson is a string and parse it because of multipart/form-data
+    let parsedSpokesPerson;
+    parsedSpokesPerson = typeof spokesPerson === 'string' ? JSON.parse(spokesPerson) : spokesPerson;
+
+    eventData.spokesPerson = {
+        name: parsedSpokesPerson.name,
+        description: parsedSpokesPerson.description,
+        image: parsedSpokesPerson.image || {},
+        socials: parsedSpokesPerson.socials || []
+    };
 
     if (req.body?.collaboration) {
         eventData.collaboration = req.body.collaboration;
@@ -17,35 +35,46 @@ const registerEvent = TryCatch(async (req, res, next) => {
         eventData.keyPoints = JSON.parse(req.body.keyPoints);
     }
 
-    if (req?.file) {
+    if (req?.files?.image) {
         const folder = "event";
-        const result = await UploadFilesCloudinary(req.file, folder);
+        const result = await UploadFilesCloudinary(req.files.image[0], folder);
         if (!result) return next(new ErrorHandler('Image upload failed', 400));
 
-        eventData.img = {
+        eventData.eventCover = {
             public_id: result.public_id,
             url: result.secure_url
         };
     }
-    
-    const event = await Event.create(eventData);
-    
-    if (!event) {
-        if (eventData.img && eventData.img.public_id) {
-            await DeleteFileCloudinary(eventData.img.public_id);
-        }
-        return next(new ErrorHandler('Event creation failed', 400));
+
+    if (req?.files?.person) {
+        const folder = "avatar";
+        const result = await UploadFilesCloudinary(req.files.person[0], folder);
+        if (!result) return next(new ErrorHandler('Image upload failed', 400));
+
+        eventData.spokesPerson.image = {
+            public_id: result.public_id,
+            url: result.secure_url
+        };
     }
 
-    return res.status(201).json({
+    const event = await Event.create(eventData);
+
+    if (!event) {
+        if (eventData?.eventCover && eventData.eventCover.public_id) {
+            await DeleteFileCloudinary(eventData.eventCover.public_id);
+        }
+        return next(new ErrorHandler("Event creation failed", 500));
+    }
+
+    res.status(201).json({
         success: true,
-        message: 'Event created successfully',
-        data: event
+        event
     });
 });
 
 const getAllEvents = TryCatch(async (req, res, next) => {
-    const events = await Event.find().populate('spokesPerson', 'name img currentPosition eventPoints about');
+
+    const events = await Event.find();
     if (!events) return next(new ErrorHandler('No events found', 404));
 
     return res.status(200).json({
@@ -56,7 +85,7 @@ const getAllEvents = TryCatch(async (req, res, next) => {
 })
 
 const getEventById = TryCatch(async (req, res, next) => {
-    const event = await Event.findById(req.params.id).populate('spokesPerson', 'name img currentPosition eventPoints about');
+    const event = await Event.findById(req.params.id);
     if (!event) return next(new ErrorHandler('Event not found', 404));
 
     return res.status(200).json({
@@ -70,29 +99,99 @@ const updateEvent = TryCatch(async (req, res, next) => {
     const { id } = req.params;
     const updateData = req.body;
     const event = await Event.findById(id);
+    // console.log(updateData);
+    
+
     if (!event) {
         return next(new ErrorHandler("Event not found", 404));
     }
-    // Check if event Points is provided in the update
-    if (updateData.eventPoints) {
-        // Case 1: Update specific Event Points object by unique identifier (e.g., id)
-        if (updateData.eventPoints._id) {
-            console.log("in if");
-            const index = event.eventPoints.findIndex(e => e._id.toString() === updateData.eventPoints._id.toString());
-            console.log(index);
+    console.log(req.files.eventPics);
+    
+
+    // Handle eventCover
+    if (req.files?.image) {
+        const folder = "event";
+        const result = await UploadFilesCloudinary(req.files.image, folder);
+        if (!result) return next(new ErrorHandler('Image upload failed', 400));
+
+        if (event.eventCover?.public_id) {
+            await DeleteFileCloudinary(event.eventCover.public_id);
+        }
+
+        event.eventCover = {
+            public_id: result.public_id,
+            url: result.secure_url
+        };
+    }
+
+    // Handle eventPics 
+    // TODO: First delte the existing eventPics
+    if (req.files?.eventPics) { 
+        const folder = "eventPics";
+        const results = await Promise.all(req.files.eventPics.map(file => UploadFilesCloudinary(file, folder)));
+        event.eventPics = results.map(result => ({
+            public_id: result.public_id,
+            url: result.secure_url
+        }));
+    }
+
+    // Handle spokesPerson image
+    if (req.files?.person) {
+        const folder = "avatar";
+        const result = await UploadFilesCloudinary(req.files.person, folder);
+        if (!result) return next(new ErrorHandler('Image upload failed', 400));
+
+        if (event.spokesPerson.image?.public_id) {
+            await DeleteFileCloudinary(event.spokesPerson.image.public_id);
+        }
+
+        event.spokesPerson.image = {
+            public_id: result.public_id,
+            url: result.secure_url
+        };
+    }
+
+    // Handle spokesPerson
+    if (updateData.spokesPerson) {
+        try {
+            updateData.spokesPerson = JSON.parse(updateData.spokesPerson);
+        } catch (error) {
+            return next(new ErrorHandler("Invalid spokesPerson data", 400));
+        }
+        
+        event.spokesPerson.name = updateData.spokesPerson.name || event.spokesPerson.name;
+        event.spokesPerson.description = updateData.spokesPerson.description || event.spokesPerson.description;
+
+        if (updateData.spokesPerson.socials) {
+            updateData.spokesPerson.socials.forEach(social => {
+                const index = event.spokesPerson.socials.findIndex(s => s.name === social.name);
+                if (index !== -1) {
+                    event.spokesPerson.socials[index] = social;
+                } else {
+                    event.spokesPerson.socials.push(social);
+                }
+            });
+        }
+
+        delete updateData.spokesPerson;
+    }
+
+    // Handle keyPoints
+    if (updateData.keyPoints) {
+        try {
+            updateData.keyPoints = JSON.parse(updateData.keyPoints);
+        } catch (error) {
+            return next(new ErrorHandler("Invalid keyPoints data", 400));
+        }
+        updateData.keyPoints.forEach(keyPoint => {
+            const index = event.keyPoints.findIndex(kp => kp._id.toString() === keyPoint._id.toString());
             if (index !== -1) {
-                // Update existing Event Points object by id
-                event.eventPoints[index] = { ...event.eventPoints[index], ...updateData.eventPoints };
+                event.keyPoints[index] = { ...event.keyPoints[index], ...keyPoint };
             } else {
-                // Optionally handle the case where the id does not exist
-                event.eventPoints.push(updateData.eventPoints);
+                event.keyPoints.push(keyPoint);
             }
-        }
-        // Case 2: Replace entire career array
-        else if (Array.isArray(updateData.eventPoints)) {
-            event.eventPoints = updateData.eventPoints;
-        }
-        delete updateData.eventPoints; // Prevent re-updating
+        });
+        delete updateData.keyPoints;
     }
 
     // Update other fields
@@ -109,12 +208,26 @@ const updateEvent = TryCatch(async (req, res, next) => {
 });
 
 const deleteEvent = TryCatch(async (req, res, next) => {
-    const event = await Event.findByIdAndDelete(req.params.id);
+    const event = await Event.findById(req.params.id);
     if (!event) return next(new ErrorHandler('Event not found', 404));
 
-    if (event.img && event.img.public_id) {
-        await DeleteFileCloudinary(event.img.public_id);
+    // Delete eventCover image
+    if (event.eventCover && event.eventCover.public_id) {
+        await DeleteFileCloudinary(event.eventCover.public_id);
     }
+
+    // Delete eventPics images
+    if (event.eventPics && event.eventPics.length > 0) {
+        await Promise.all(event.eventPics.map(pic => DeleteFileCloudinary(pic.public_id)));
+    }
+
+    // Delete spokesPerson image
+    if (event.spokesPerson && event.spokesPerson.image && event.spokesPerson.image.public_id) {
+        await DeleteFileCloudinary(event.spokesPerson.image.public_id);
+    }
+
+    // Delete the event
+    await Event.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({
         success: true,

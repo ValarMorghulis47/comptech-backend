@@ -5,10 +5,15 @@ import ErrorHandler from '../utils/ErrorHandler.js';
 
 
 const createTeam = TryCatch(async (req, res, next) => {
-    const { name, members } = req.body;
+    const { team, members, session } = req.body;
+
+    const teamExist = await Team.findOne({ team });
+    if (teamExist) return next(new ErrorHandler('Team already exist', 400));
+
     if (members.length < 2) return next(new ErrorHandler('Team must have at least 2 members', 400));
-    const team = await Team.create({
-        name,
+    const newTeam = await Team.create({
+        team,
+        session,
         members
     })
     if (!team) return next(new ErrorHandler('Team could not be created', 400));
@@ -17,7 +22,7 @@ const createTeam = TryCatch(async (req, res, next) => {
         .json({
             sucess: true,
             message: "Team Created Suceesfully",
-            data: team
+            data: newTeam
         });
 });
 

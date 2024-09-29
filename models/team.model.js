@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
 
 const teamSchema = new mongoose.Schema({
-    name: {
+    team: {
         type: String,
+        required: true
+    },
+    session: {
+        type: Number,
         required: true
     },
     members: [
